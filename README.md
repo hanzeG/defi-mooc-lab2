@@ -174,7 +174,7 @@ This algorithm employs two iterators with maximum iteration `iterationsAttack`, 
     }
 ```
 
-Under a series of parameter settings (`iterationsAttack`=8, `iterationsSwap`=8, `threshold` = 100e18, ...), 6 rounds of attacks were conducted, resulting in a total of `8,113,466.185763583431571664 sUSD` obtained.
+Under a series of parameter settings (`iterationsAttack`=`8`, `iterationsSwap`=`8`, `threshold` = `100e18`, ...), 6 rounds of attacks were conducted, resulting in a total of `8,113,466.185763583431571664 sUSD` obtained.
 
 ```javascript
 extract 7,524,199.095291665974339638 sUSD in round 1
@@ -225,4 +225,4 @@ The optimization goal is to approximate the amount of `sUSD` swapping for `LP to
     }
 ```
 
-Utilizing the binary search method mentioned earlier and based on the initial swap amount of `sUSD` (with the loan asset being `USDC`, and since there is slippage during the swap process, the borrowed `USDC` should be minimized), the algorithm approximates the quantity of `USDC` that minimizes borrowing costs. Finally, under the settings of `_dx`=18800000e6 and `_dy_target`=`SUSDMetaPoolUpdated liquidity`, a total profit of `1,336,554.0445724 USDC` was achieved, compared to the optimized `3,072,730 USDC` in [the case study](https://etherscan.io/tx/0x2b023d65485c4bb68d781960c2196588d03b871dc9eb1c054f596b7ca6f7da56).
+Utilizing the binary search method mentioned earlier and based on the initial swap amount of `sUSD` (with the loan asset being `USDC`, and since there is slippage during the swap process, the borrowed `USDC` should be minimized), the algorithm approximates the quantity of `USDC` that minimizes borrowing costs. Finally, under the settings of `_dx`=`18800000e6` and `_dy_target`=`SUSDMetaPoolUpdated liquidity`, a total profit of `1,336,554.0445724 USDC` was achieved, compared to the optimized `3,072,730 USDC` in [the case study](https://etherscan.io/tx/0x2b023d65485c4bb68d781960c2196588d03b871dc9eb1c054f596b7ca6f7da56).
