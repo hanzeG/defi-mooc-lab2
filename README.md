@@ -1,121 +1,102 @@
 # Hands-on Exercise: Flash Loan Arbitrage
 
+This repo implements smart contracts that perform flash loan based arbitrages on 2 test cases.
 
+## Test Cases
 
+### Task 1: Flash Loan based Liquidation
+Implement liquidation of `0x59CE4a2AC5bC3f5F225439B2993b86B42f6d3e9F` on Aave V2 which was liquidated at block `12489620`. Check out the [original liquidation transaction](https://etherscan.io/tx/0xac7df37a43fab1b130318bbb761861b8357650db2e2c6493b73d6da3d9581077) and the [original exercise requirments](https://github.com/KaihuaQin/defi-mooc-lab2).
 
+### Task 2: Flash Loan based Attack
+Optimize the flash loan based attack on Saddle Finance `SUSDMetaPoolUpdated` pool `0x824dcD7b044D60df2e89B1bB888e66D8BCf41491`. Check out the [original attack transaction](https://etherscan.io/tx/0x2b023d65485c4bb68d781960c2196588d03b871dc9eb1c054f596b7ca6f7da56).
 
-
-
-
-
-
-
-
-
-
-# Hands-on Exercise: Flash Loan based Liquidation
-
-## Exercise
-In this exercise, you are expected to implement a smart contract that performs a flash loan based liquidation.
-
-### Prerequisite
-- You need to register an account on https://www.alchemy.com/ for access to an archive Ethereum node.
-
-- You need to prepare the nodeJS environment for the project yourself, or have [docker](https://www.docker.com/) installed on your machine.
-
-### Requirements
-
-- The smart contract should allow you to perform a flash loan, a liquidation, and an asset exchange in one blockchain transaction.
-
-- To ease marking, we require your contract to provide a unified interface `operate`. By calling `operate`, the flash loan, liquidation, and exchange should be executed properly. You are allowed to "hardcode" the execution logic and parameters in the `operate` function.
+## Prerequisite
+- Create a `.env` file with adding your HTTPS API from https://www.alchemy.com/ for access to an archive Ethereum node.
 
 ```javascript
-function operate() external;
+RPC_LINK = "https://eth-mainnet.g.alchemy.com/v2/..."
 ```
 
-### Test case
-
-You are expected to liquidate `0x59CE4a2AC5bC3f5F225439B2993b86B42f6d3e9F` on Aave V2 which was liquidated at block `12489620`. Check out the [original liquidation transaction](https://etherscan.io/tx/0xac7df37a43fab1b130318bbb761861b8357650db2e2c6493b73d6da3d9581077).
-
-### Commands
-To test your contract:
-1. `docker build -t defi-mooc-lab2 .`
-2. `docker run -e ALCHE_API="$YOUR ALCHEMY ETHEREUM MAINNET API" -it defi-mooc-lab2 npm test`
-
-### Grading
-
-Your grade is determined by the actual profit you earn in the test case. After the program execution, you should see `Profit xxx ETH` at the end of a successful liquidation. If you are not using the docker environment, for successful execution you should also see a `profit.txt` file which contains the amount of ETH that you earned after the liquidation. **If your implementation is correct, you should be receiving at least 21 ETH as the profit.** Note that we reduce the gas fee to be zero to encourage programming complicated liquidation strategies. 
-
-### Submission
-
-Your submission should be a single `LiquidationOperator.sol` file **that contains at most one import statement `import "hardhat/console.sol";`**. If you plan to include libraries or interfaces from other npm packages, please manually add them to your contract file so that we have a unified environment for grading. 
-
-## Background
-
-We provide the following background information for this exercise.
-
-### Aave liquidation
-To trigger a liquidation on Aave, you need to call a public function `liquidationCall` provided by the Aave smart contracts. In the function, you can specify `user` representing the borrowing position you would like to liquidate, `debtAsset`, the cryptocurrency you would like to repay (let's say token D), and `collateralAsset`, the collateral cryptocurrency you would like claim from the borrowing position (let's say token C). You also specify the amount of debt you want to repay, `debtToCover`.
+- Run the test file to test contracts for Task 1 and Task 2.
 
 ```javascript
-function liquidationCall(
-    address collateralAsset,
-    address debtAsset,
-    address user,
-    uint256 debtToCover,
-    bool receiveAToken
-  ) external;
+npm install
+npm run test
 ```
 
-By calling this function, you then repay some amount of token D to Aave and in return, some token C is sent to your account.
+## Result
+1. For Task 1, the profit is `43.823271820635151298 ETH`, with the flash loan amount of `1772750.568908 USDT` for gainning the collateral asset in `WBTC`.
+2. For Task 2, the profit is `13365540.445724 USDC`, with the flash loan amount of `18309536.000000 USDC`.
 
-You should make sure that the user is in a liquidatable state. Otherwise, the aave smart contract would revert your transaction and you would pay transaction fees for an unsuccessful liquidation. 
+## Solutions
 
-### Uniswap flash loan
-What if you don't have any upfront token D, but you do need some to repay in the liquidation? You can use flash loans! A Uniswap flash loan (a.k.a flash swap) can grant you the cryptocurrencies available in the pool without any collateral, as long as you preserve the constant `K` in the end of the transaction. Check out the detailed code snippet ([Uniswap V2](https://github.com/Uniswap/uniswap-v2-core/blob/master/contracts/UniswapV2Pair.sol)) in the following.
+The entry functions for Task 1 `LiquidationOperator.sol` and Task 2 `AttackOperator.sol` are both named `operate`. All optimizer-related parameters are initialized in function `operate`.
+
+### Task 1
+
+Implemented an optimizer based on the gradient ascent algorithm, aimed at approximating the borrowing amount `preciseAmount` that maximizes profit. The objective function `targetFuntion(uint256 preciseAmount)` computes the total profit at a specific `preciseAmount`, which is the difference between the collateral assets obtained from liquidation and the borrowing cost from flash loans (excluding gas costs). 
 
 ```javascript
-function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external lock {
-    require(amount0Out > 0 || amount1Out > 0, 'UniswapV2: INSUFFICIENT_OUTPUT_AMOUNT');
-    (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
-    require(amount0Out < _reserve0 && amount1Out < _reserve1, 'UniswapV2: INSUFFICIENT_LIQUIDITY');
-
-    uint balance0;
-    uint balance1;
-    { // scope for _token{0,1}, avoids stack too deep errors
-    address _token0 = token0;
-    address _token1 = token1;
-    require(to != _token0 && to != _token1, 'UniswapV2: INVALID_TO');
-    if (amount0Out > 0) _safeTransfer(_token0, to, amount0Out); // optimistically transfer tokens
-    if (amount1Out > 0) _safeTransfer(_token1, to, amount1Out); // optimistically transfer tokens
-    if (data.length > 0) IUniswapV2Callee(to).uniswapV2Call(msg.sender, amount0Out, amount1Out, data);
-    balance0 = IERC20(_token0).balanceOf(address(this));
-    balance1 = IERC20(_token1).balanceOf(address(this));
+    // profit = collateral amount in weth - flash repay amount in weth
+    function targetFuntion( uint256 preciseAmount ) internal view returns (uint256 profit) {
+        profit =
+            getCollateralAmount(preciseAmount) -
+            getFlashRepayAmount(preciseAmount);
+        return profit;
     }
-    uint amount0In = balance0 > _reserve0 - amount0Out ? balance0 - (_reserve0 - amount0Out) : 0;
-    uint amount1In = balance1 > _reserve1 - amount1Out ? balance1 - (_reserve1 - amount1Out) : 0;
-    require(amount0In > 0 || amount1In > 0, 'UniswapV2: INSUFFICIENT_INPUT_AMOUNT');
-    { // scope for reserve{0,1}Adjusted, avoids stack too deep errors
-    uint balance0Adjusted = balance0.mul(1000).sub(amount0In.mul(3));
-    uint balance1Adjusted = balance1.mul(1000).sub(amount1In.mul(3));
-    require(balance0Adjusted.mul(balance1Adjusted) >= uint(_reserve0).mul(_reserve1).mul(1000**2), 'UniswapV2: K');
-    }
-
-    _update(balance0, balance1, _reserve0, _reserve1);
-    emit Swap(msg.sender, amount0In, amount1In, amount0Out, amount1Out, to);
-}
 ```
-
-Importantly, Uniswap would attempt to call into the receiver to invoke the function `uniswapV2Call` after sending the flash loan assets. This means that you need a smart contract to accept a flash loan. The smart contract should have an `uniswapV2Call` function and you can program how you use the flash loan assets in this function.
+The function `getCollateralAmount(uint256 usdtPreciseAmount)` for calculating the collateral assets obtained is represented below. The bonus rate `liquidationBonusWbtc` for the user's collateral assets `wBTC` is defined as 10% according to [Aave's definition](https://github.com/aave/protocol-v2/blob/ce53c4a8c8620125063168620eba0a8a92854eb8/markets/amm/reservesConfigs.ts#L26). 
 
 ```javascript
-if (data.length > 0) IUniswapV2Callee(to).uniswapV2Call(msg.sender, amount0Out, amount1Out, data);
+   // calculate collateral amount with bonus in weth of the liquidation
+    function getCollateralAmount(uint256 usdtPreciseAmount) internal view returns (uint256 wethPreciseAmount) {
+        uint256 coverPreciseAmount = (usdtPreciseAmount / usdtDecimal) * usdtPrice;
+        uint256 bonusPreciseAmount = (coverPreciseAmount * liquidationBonusWbtc) / liquidationPrecise;
+        uint256 wbtcPreciseAmount = (bonusPreciseAmount * wbtcDecimal) / wbtcPrice;
+        // swap wbtc to weth
+        (uint wbtcReserves2, uint wethReserves2, ) = pairWbtcWeth.getReserves();
+        wethPreciseAmount = getAmountOut(wbtcPreciseAmount, wbtcReserves2, wethReserves2);
+        return wethPreciseAmount;
+    }
+```
+The function `getFlashRepayAmount(uint256 usdtPreciseAmount)` for calculating the flash loan cost is represented below. All the calculation processes, according to [Aave protocol](https://docs.aave.com/developers/v/2.0/guides/liquidations#id-0.-prerequisites), retrieves the corresponding price in wei units priced in `ETH` by calling [the oracle interface](https://docs.aave.com/developers/v/2.0/the-core-protocol/price-oracle/ipriceoracle).
+
+```javascript
+    // calculate repay amount in weth of the flash loan
+    function getFlashRepayAmount(uint256 usdtPreciseAmount) internal view returns (uint256 wethPreciseAmount) {
+        (uint usdtReserves1, uint wethReserves1, ) = pairWethUsdt.getReserves();
+        wethPreciseAmount = getAmountIn(usdtPreciseAmount,usdtReserves1,wethReserves1);
+        return wethPreciseAmount;
+    }
 ```
 
-Back to liquidation, you can program the liquidation logic in the `uniswapV2Call` function. So, when you don't have enough token D to perform a liquidation, you can request a flash loan and your smart contract can do the liquidation after receiving token D.
+Based on the implementation of `targetFuntion`, the optimizer fits the slope of the objective function at a small distance using finite differences and approximates the borrowing amount when maximizing profit using the gradient algorithm. The optimizer function `function optimizer(int256 x0,int256 learningRate,int256 epsilon,int256 maxIterations,int256 threshold,int256 precision,int256 dynamic)` is implemented with a set of parameters. `x0` represents the initial borrowing amount input. `epsilon` represents the change in borrowing amount during each optimization process. `maxIterations` represents the maximum number of iterations. Based on precision, two rates are defined: `learningRate` controls the degree of learning for each `x`, while `dynamic` is used to ensure the convergence of the optimizer. 
 
-### What do you need to do after liquidation?
-With the flash loan, you now have enough token D. You can repay the debt for the borrowing position and claim the collateral token C. Congratulation! A successful liquidation is completed, but, wait, you still need to repay the flash loan. Remember that you need to preserve the `K`. In the exercise, you are required to convert every earned token to ETH through e.g., exchanges. This is for easing the grading.
+```javascript
+ // calculate x with the largest output of target function
+    function optimizer(
+        int256 x0,
+        int256 learningRate,
+        int256 epsilon,
+        int256 maxIterations,
+        int256 threshold,
+        int256 precision,
+        int256 dynamic
+    ) internal view returns (int256) {
+        int256 x = x0;
+        int256 grad;
 
-### More reference
-Please check out the links in the template file (`contracts/LiquidationOperator.sol`) for how to use the interfaces. [Etherscan](https://etherscan.io/) is a handy tool for exploring addresses, blocks, and transactions on-chain. If you have further questions or comments, please feel free to [submit an issue](https://github.com/KaihuaQin/defi-mooc-lab2/issues/new).
+        for (int256 i = 0; i < maxIterations; i++) {
+            grad = gradient(x, epsilon);
+            if (abs(grad) < threshold) {
+                console.log("stop optimize at round %s", uint(i));
+                break;
+            }
+            // make the algorithm dynamically converge
+            x = x + (((learningRate * dynamic) / precision) * grad) / precision;
+        }
+        return x;
+    }
+```
+
+The profit results shown earlier are achieved with such a set of parameters `(2000000e6, 10000e6, 8, 1e6, 9000e6, 999000, 1e6)`. This method has high requirements for the initial value `x0` selection, which can be improved by adding algorithms such as random generation.

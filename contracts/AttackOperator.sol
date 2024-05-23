@@ -122,7 +122,7 @@ contract AttackOperator is Ownable {
 
         console.log(
             "Attack Profit: %s USDC",
-            IERC20(usdc).balanceOf(address(this)) / decimalUsdc
+            IERC20(usdc).balanceOf(address(this))
         );
     }
 
