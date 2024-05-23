@@ -263,8 +263,8 @@ contract LiquidationOperator is IUniswapV2Callee {
         pairWethUsdt.swap(0, usdtLoanPrecise, addrMe, abi.encode("flash loan"));
 
         // 3. Convert the profit into ETH and send back to sender
-        uint256 my_eth = IERC20(addrWeth).balanceOf(addrMe);
-        IWETH(addrWeth).withdraw(my_eth);
+        uint256 myEth = IERC20(addrWeth).balanceOf(addrMe);
+        IWETH(addrWeth).withdraw(myEth);
         payable(msg.sender).transfer(addrMe.balance);
         // END TODO
     }
@@ -320,11 +320,11 @@ contract LiquidationOperator is IUniswapV2Callee {
     function getFlashRepayAmount(
         uint256 usdtPreciseAmount
     ) internal view returns (uint256 wethPreciseAmount) {
-        (uint reserves_usdt, uint reserves_weth, ) = pairWethUsdt.getReserves();
+        (uint usdtReserves1, uint wethReserves1, ) = pairWethUsdt.getReserves();
         wethPreciseAmount = getAmountIn(
             usdtPreciseAmount,
-            reserves_usdt,
-            reserves_weth
+            usdtReserves1,
+            wethReserves1
         );
         return wethPreciseAmount;
     }
@@ -341,11 +341,11 @@ contract LiquidationOperator is IUniswapV2Callee {
             wbtcPrice;
 
         // swap wbtc to weth
-        (uint reserves_wbtc, uint reserves_weth, ) = pairWbtcWeth.getReserves();
+        (uint wbtcReserves2, uint wethReserves2, ) = pairWbtcWeth.getReserves();
         wethPreciseAmount = getAmountOut(
             wbtcPreciseAmount,
-            reserves_wbtc,
-            reserves_weth
+            wbtcReserves2,
+            wethReserves2
         );
         return wethPreciseAmount;
     }
