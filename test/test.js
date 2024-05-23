@@ -3,8 +3,8 @@ const { network, ethers } = require("hardhat");
 const { BigNumber, utils } = require("ethers");
 const { writeFile } = require('fs');
 
-describe("Liquidation", function () {
-  it("test", async function () {
+describe("Test", function () {
+  it("Task 1", async function () {
     await network.provider.request({
       method: "hardhat_reset",
       params: [{
@@ -51,5 +51,25 @@ describe("Liquidation", function () {
 
     expect(profit.gt(BigNumber.from(0)), "not profitable").to.be.true;
     writeFile('profit.txt', String(utils.formatEther(profit)), function (err) { console.log("failed to write profit.txt: %s", err) });
+  });
+
+  it("Task 2", async function () {
+    await network.provider.request({
+      method: "hardhat_reset",
+      params: [{
+        forking: {
+          jsonRpcUrl: process.env.ALCHE_API,
+          blockNumber: 14684300,
+        }
+      }]
+    });
+
+    const gasPrice = 0;
+
+    const AttackOperator = await ethers.getContractFactory("AttackOperator");
+    const attackOperator = await AttackOperator.deploy(overrides = { gasPrice: gasPrice });
+    await attackOperator.deployed();
+
+    await attackOperator.operate(overrides = { gasPrice: gasPrice });
   });
 });
