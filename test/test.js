@@ -50,7 +50,7 @@ describe("Test", function () {
     console.log("Profit", utils.formatEther(profit), "ETH");
 
     expect(profit.gt(BigNumber.from(0)), "not profitable").to.be.true;
-    writeFile('profit.txt', String(utils.formatEther(profit)), function (err) { console.log("failed to write profit.txt: %s", err) });
+    // writeFile('profit.txt', String(utils.formatEther(profit)), function (err) { console.log("failed to write profit.txt: %s", err) });
   });
 
   it("Task 2", async function () {
