@@ -203,7 +203,7 @@ extract 3,343.428710349087222547 sUSD in round 6
     }
 ```
 
-The optimization goal is to approximate the amount of `sUSD` swapping for `LP token` that maximizes the target function. Ultimately, the approximated swap amount was `2,131,337,367,973,954,208,000,000 sUSD`, resulting in `7,380,805,998,016,531,990,226,251 LP tokens` obtained through the swap. Subsequently, liquidity is extracted and swapped for `USDC` as the unified unit of profit.
+The optimization goal is to approximate the amount of `sUSD` swapping for `LP token` that maximizes the target function. Ultimately, the approximated swap amount was `2,131,337.367973954208000000 sUSD`, resulting in `7,380,805.998016531990226251 LP tokens` obtained through the swap. Subsequently, liquidity is extracted and swapped for `USDC` as the unified unit of profit.
 
 ```javascript
     function find_dx(
@@ -225,4 +225,4 @@ The optimization goal is to approximate the amount of `sUSD` swapping for `LP to
     }
 ```
 
-Utilizing the binary search method mentioned earlier and based on the initial swap amount of `sUSD` (with the loan asset being `USDC`, and since there is slippage during the swap process, the borrowed `USDC` should be minimized), the algorithm approximates the quantity of `USDC` that minimizes borrowing costs. Finally, under the settings of `_dx`=`18800000e6` and `_dy_target`=`SUSDMetaPoolUpdated liquidity`, a total profit of `1,336,554.0445724 USDC` was achieved, compared to the optimized `3,072,730 USDC` in [the case study](https://etherscan.io/tx/0x2b023d65485c4bb68d781960c2196588d03b871dc9eb1c054f596b7ca6f7da56).
+Utilizing the binary search method mentioned earlier and based on the initial swap amount of `sUSD` (with the loan asset being `USDC`, and since there is slippage during the swap process, the borrowed `USDC` should be minimized), the algorithm approximates the quantity of `USDC` that minimizes borrowing costs. Finally, under the settings of `_dx`=`18800000e6` and `_dy_target`=`SUSDMetaPoolUpdated liquidity`, a total profit of `1,336,554.0445724 USDC` was achieved, compared to the optimized `3,072,730 USDC` in [the case](https://etherscan.io/tx/0x2b023d65485c4bb68d781960c2196588d03b871dc9eb1c054f596b7ca6f7da56).
